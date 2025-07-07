@@ -7,5 +7,6 @@ flowchart LR
   end
   API -->|writes to| PG[(PostgreSQL)]
   API -->|writes to| NG[(Neo4j)]
+  Zoho-One -.->|Nightly ETL ⏰| PG
   PG -- Reads/Writes --> Facade[GraphQL/REST Façade]
   NG -- Reads/Writes --> Facade 

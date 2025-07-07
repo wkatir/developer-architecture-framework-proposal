@@ -30,4 +30,21 @@ CREATE TABLE clients (
   \item \textbf{Real-time Webhooks}: Zoho → \texttt{/zoho/webhook} → RabbitMQ
   \item \textbf{Nightly ETL}: Full table snapshots for analytics
   \item \textbf{GraphQL Federation}: Stitch Zoho REST + local data under one schema
-\end{itemize} 
+\end{itemize}
+
+\subsubsection{Apollo Federation Example}
+\begin{minted}{javascript}
+// Apollo Federation example
+const zohoREST = new RESTDataSource({...});
+const typeDefs = gql`
+  extend type Query {
+    zohoContacts: [Contact]
+  }
+`;
+const resolvers = {
+  Query: { 
+    zohoContacts: (_, __, { dataSources }) => 
+      dataSources.zohoREST.getContacts() 
+  }
+};
+\end{minted} 

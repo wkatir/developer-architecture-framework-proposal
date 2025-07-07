@@ -1,0 +1,71 @@
+\section{Cloud-Agnostic Infrastructure}
+
+\subsection{Infrastructure as Code \& Portability}
+The DFAP framework leverages cloud-agnostic patterns to ensure:
+\begin{itemize}
+  \item \textbf{Multi-Cloud Readiness:} Terraform modules work across AWS, Azure, GCP
+  \item \textbf{Vendor Lock-in Avoidance:} Standard APIs and open-source technologies
+  \item \textbf{Cost Optimization:} Flexible deployment based on pricing and features
+  \item \textbf{Disaster Recovery:} Cross-region and cross-cloud backup strategies
+\end{itemize}
+
+\subsection{Core Managed Services}
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Service Type} & \textbf{AWS} & \textbf{Azure} & \textbf{GCP} \\
+\hline
+Compute & ECS/Fargate & Container Instances & Cloud Run \\
+\hline
+RDBMS & RDS PostgreSQL & Azure Database & Cloud SQL \\
+\hline
+Message Queue & SQS/EventBridge & Service Bus & Pub/Sub \\
+\hline
+Graph Database & Neptune & CosmosDB Gremlin & Neo4j on GKE \\
+\hline
+Secrets Management & Secrets Manager & Key Vault & Secret Manager \\
+\hline
+Load Balancer & ALB/NLB & Load Balancer & Cloud Load Balancing \\
+\hline
+\end{tabular}
+\caption{Cloud service mappings for core infrastructure components}
+\end{table}
+
+\subsection{Networking \& Security}
+\begin{itemize}
+  \item \textbf{VPC Design:} Private subnets for databases, public for load balancers
+  \item \textbf{Security Groups:} Least-privilege network access controls
+  \item \textbf{WAF Integration:} Web application firewall for API protection
+  \item \textbf{VPN/Transit Gateway:} Secure connectivity to on-premises systems
+  \item \textbf{Network Monitoring:} Flow logs and intrusion detection
+\end{itemize}
+
+\subsection{CI/CD Integration}
+\begin{enumerate}
+  \item \textbf{Infrastructure Pipeline:} Terraform plan/apply with approval gates
+  \item \textbf{Application Pipeline:} Container build → test → deploy
+  \item \textbf{Environment Promotion:} Dev → Staging → Production workflow
+  \item \textbf{Rollback Capabilities:} Automated failure detection and reversion
+\end{enumerate}
+
+\subsection{Observability \& SLOs}
+\begin{itemize}
+  \item \textbf{Metrics:} Application performance, infrastructure health
+  \item \textbf{Logging:} Centralized log aggregation and analysis
+  \item \textbf{Tracing:} Distributed request tracing across services
+  \item \textbf{Alerting:} SLO-based alerts with escalation policies
+  \item \textbf{SLOs:} 99.9\% uptime, <200ms API response, <1\% error rate
+\end{itemize}
+
+\subsection{Generic Cloud Architecture}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{diagrams/cloud_architecture_general.svg}
+  \caption{Cloud-agnostic infrastructure pattern with private/public subnet separation}
+\end{figure}
+
+% TODO: Add specific Terraform module examples
+% TODO: Include cost estimation and optimization strategies
+% TODO: Add disaster recovery and backup procedures
+% TODO: Define monitoring and alerting runbooks 

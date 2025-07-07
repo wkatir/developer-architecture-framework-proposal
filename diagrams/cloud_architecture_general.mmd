@@ -1,0 +1,49 @@
+flowchart TB
+    Internet((Internet)) --> WAF[Web Application Firewall]
+    WAF --> LB[Load Balancer]
+    
+    subgraph "Public Subnets"
+        LB --> ALB[Application Load Balancer]
+        ALB --> NAT[NAT Gateway]
+    end
+    
+    subgraph "Private Subnets"
+        ALB --> APP1[Application Instance 1]
+        ALB --> APP2[Application Instance 2]
+        ALB --> APP3[Application Instance N]
+        
+        APP1 --> PG[(PostgreSQL)]
+        APP2 --> PG
+        APP3 --> PG
+        
+        APP1 --> MQ[Message Queue]
+        APP2 --> MQ
+        APP3 --> MQ
+        
+        APP1 --> GRAPH[(Neo4j Graph DB)]
+        APP2 --> GRAPH
+        APP3 --> GRAPH
+        
+        APP1 --> SECRETS[Secrets Manager]
+        APP2 --> SECRETS
+        APP3 --> SECRETS
+        
+        NAT --> APP1
+        NAT --> APP2
+        NAT --> APP3
+    end
+    
+    subgraph "Monitoring & Logging"
+        APP1 --> LOGS[CloudWatch Logs]
+        APP2 --> LOGS
+        APP3 --> LOGS
+        PG --> LOGS
+        MQ --> LOGS
+        GRAPH --> LOGS
+    end
+    
+    subgraph "Backup & DR"
+        PG --> BACKUP[(Database Backups)]
+        SECRETS --> BACKUP
+        GRAPH --> BACKUP
+    end 

@@ -8,7 +8,31 @@
 
 \subsection{Security \& Compliance}
 \begin{itemize}
-  \item \textbf{AuthN/AuthZ:} OAuth2 for Zoho; JWT + RBAC internally.
+  \item \textbf{AuthN/AuthZ:} 
+    \begin{itemize}
+      \item \textbf{Zoho OAuth2 Flow:} 
+        \begin{itemize}
+          \item Endpoints: \texttt{https://accounts.zoho.com/oauth/v2/auth}, \texttt{/token}
+          \item Scopes: \texttt{ZohoCRM.modules.ALL}, \texttt{Desk.tickets.READ}, \texttt{ZohoProjects.projects.ALL}
+          \item Grant type: Authorization Code with PKCE
+        \end{itemize}
+      \item \textbf{JWT Structure:} 
+        \begin{minted}{json}
+{
+  "sub": "user123",
+  "roles": ["admin", "support"],
+  "zoho_org": "gcbi_org_id",
+  "exp": 1672531200,
+  "iat": 1672444800
+}
+        \end{minted}
+      \item \textbf{RBAC Roles:}
+        \begin{itemize}
+          \item \texttt{admin}: Full CRUD on all resources, system configuration
+          \item \texttt{support}: Read tickets, update status, create invoices
+          \item \texttt{analytics}: Read-only access to reports and dashboards
+        \end{itemize}
+    \end{itemize}
   \item \textbf{Encryption:} TLS1.2+ in transit; AES-256 at rest.
   \item \textbf{Audit Logs:} Append-only logs of all webhook/events.
   \item \textbf{Standards:} ISO-9001 traceability; SOC-2 least-privilege.

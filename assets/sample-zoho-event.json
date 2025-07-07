@@ -1,0 +1,17 @@
+{
+  "event": "contact.created",
+  "module": "Contacts",
+  "data": {
+    "id": "4150868000000646001",
+    "Email": "john.doe@example.com",
+    "First_Name": "John",
+    "Last_Name": "Doe",
+    "Company": "GCBI Client Corp",
+    "Phone": "+1-555-123-4567",
+    "Lead_Source": "Website",
+    "$created_time": "2024-01-15T10:30:00-08:00",
+    "$modified_time": "2024-01-15T10:30:00-08:00"
+  },
+  "webhook_url": "https://api.example.com/zoho/webhook",
+  "timestamp": "2024-01-15T18:30:00Z"
+} 
