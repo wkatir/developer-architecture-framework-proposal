@@ -1,23 +1,25 @@
 erDiagram
     CLIENTS {
-      SERIAL id PK
-      TEXT zoho_id UNIQUE
-      TEXT name
-      TIMESTAMPTZ created_at
+      int id PK
+      string zoho_id UK "Unique Zoho identifier"
+      string name
+      datetime created_at
     }
     PROJECTS {
-      SERIAL id PK
-      TEXT zoho_id UNIQUE
-      TEXT name
-      TEXT status
-      TIMESTAMPTZ created_at
+      int id PK
+      string zoho_id UK "Unique Zoho identifier"
+      int client_id FK
+      string name
+      string status
+      datetime created_at
     }
     INVOICES {
-      SERIAL id PK
-      TEXT zoho_id UNIQUE
-      NUMERIC amount
-      TIMESTAMPTZ issued_at
-      TIMESTAMPTZ created_at
+      int id PK
+      string zoho_id UK "Unique Zoho identifier"
+      int project_id FK
+      decimal amount
+      datetime issued_at
+      datetime created_at
     }
     CLIENTS ||--o{ PROJECTS : owns
     PROJECTS ||--o{ INVOICES : billed_by 
