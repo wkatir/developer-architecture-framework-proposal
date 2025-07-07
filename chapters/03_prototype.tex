@@ -44,3 +44,183 @@ app.get('/projects/:id', async (req,res) => {
 
 \subsection{Run Instructions}
 See \texttt{prototype/README.md} for Docker-based setup and local dev. 
+
+\section{Prototype Implementation}
+
+\subsection{Blueprint Architecture - Project Onboarding Workflow}
+
+The system implements a state-driven Blueprint for project lifecycle management, demonstrating enterprise workflow orchestration:
+
+\begin{minted}{yaml}
+# zoho-projects-blueprint.yml
+name: "MSP Project Onboarding"
+trigger: "lead_qualified"
+states:
+  initial: "lead_review"
+  
+transitions:
+  - from: "lead_review"
+    to: "technical_assessment" 
+    condition: "lead.score >= 80"
+    actions:
+      - webhook: "/api/v1/assessments"
+      - notify: "technical_team"
+      
+  - from: "technical_assessment"
+    to: "project_approved"
+    condition: "assessment.complexity <= 3"
+    actions:
+      - create_project: "zoho_projects"
+      - assign_pm: "auto_balance"
+      
+  - from: "project_approved"
+    to: "active"
+    condition: "contract.signed == true"
+    actions:
+      - provision_resources
+      - setup_billing_schedule
+      - create_initial_invoice
+\end{minted} 
+
+\subsection{Complete Blueprint Architecture - MSP Workflow Design}
+
+The system implements three core Blueprint workflows that demonstrate enterprise process orchestration:
+
+\subsubsection{Blueprint 1: Lead Onboarding \& Project Initiation}
+\begin{minted}{yaml}
+# msp-lead-onboarding-blueprint.yml
+name: "MSP Lead to Project Pipeline"
+trigger: "crm.lead_qualified"
+business_rules:
+  lead_scoring: ">=80 points required"
+  technical_complexity: "1-5 scale assessment"
+  
+states:
+  - lead_review:
+      assignee: "sales_manager"
+      sla: "24_hours"
+      actions: ["validate_requirements", "estimate_effort"]
+      
+  - technical_assessment:
+      assignee: "technical_lead" 
+      sla: "48_hours"
+      actions: ["complexity_analysis", "resource_estimation"]
+      conditions: "lead.score >= 80"
+      
+  - commercial_approval:
+      assignee: "finance_manager"
+      sla: "24_hours" 
+      actions: ["pricing_validation", "margin_check"]
+      conditions: "assessment.complexity <= 3"
+      
+  - project_creation:
+      automated: true
+      actions: 
+        - "create_zoho_project"
+        - "assign_project_manager" 
+        - "setup_billing_schedule"
+        - "provision_initial_resources"
+
+notifications:
+  - trigger: "state_transition"
+    channels: ["email", "zoho_cliq"]
+  - trigger: "sla_breach"
+    escalation: "department_head"
+\end{minted}
+
+\subsubsection{Blueprint 2: Support Ticket Lifecycle}
+\begin{minted}{yaml}
+# msp-support-workflow-blueprint.yml
+name: "MSP Support Ticket Resolution"
+trigger: "desk.ticket_created"
+business_rules:
+  priority_matrix: "urgency × impact"
+  escalation_paths: "L1 → L2 → L3 → Vendor"
+  
+states:
+  - triage:
+      assignee: "support_l1"
+      sla: "15_minutes"
+      actions: ["classify_issue", "set_priority", "initial_response"]
+      
+  - diagnosis:
+      assignee: "auto_route_by_category" 
+      sla_matrix:
+        critical: "1_hour"
+        high: "4_hours"
+        medium: "8_hours"
+        low: "24_hours"
+      actions: ["root_cause_analysis", "solution_research"]
+      
+  - resolution:
+      assignee: "assigned_engineer"
+      actions: ["implement_fix", "test_solution", "document_kb"]
+      conditions: "solution_validated == true"
+      
+  - client_validation:
+      assignee: "client"
+      sla: "48_hours"
+      actions: ["client_approval", "satisfaction_survey"]
+      
+  - closure:
+      automated: true
+      actions:
+        - "update_knowledge_base"
+        - "billing_time_entry"
+        - "performance_metrics_update"
+
+escalation_rules:
+  - condition: "sla_breach"
+    action: "auto_escalate_tier"
+  - condition: "client_dissatisfaction"
+    action: "management_review"
+\end{minted}
+
+\subsubsection{Blueprint 3: Project Closure \& Billing Finalization}
+\begin{minted}{yaml}
+# msp-project-closure-blueprint.yml
+name: "MSP Project Delivery & Financial Closure"
+trigger: "projects.milestone_completed"
+business_rules:
+  deliverable_validation: "client_sign_off_required"
+  billing_accuracy: "time_tracking_reconciliation"
+  
+states:
+  - deliverable_review:
+      assignee: "project_manager"
+      sla: "24_hours"
+      actions: ["validate_completeness", "quality_check"]
+      
+  - client_presentation:
+      assignee: "account_manager"
+      sla: "48_hours"
+      actions: ["schedule_demo", "present_deliverables"]
+      
+  - client_acceptance:
+      assignee: "client_stakeholder"
+      sla: "5_business_days"
+      actions: ["acceptance_testing", "sign_off_documentation"]
+      
+  - billing_reconciliation:
+      assignee: "finance_team"
+      sla: "24_hours"
+      actions: ["time_entry_validation", "expense_reconciliation"]
+      conditions: "client_acceptance == approved"
+      
+  - invoice_generation:
+      automated: true
+      actions:
+        - "generate_final_invoice"
+        - "update_revenue_recognition"
+        - "archive_project_documents"
+        - "trigger_follow_up_campaigns"
+        
+  - project_closure:
+      assignee: "project_manager"
+      actions: ["team_retrospective", "lessons_learned", "resource_release"]
+
+integration_points:
+  zoho_books: "automated_invoicing"
+  zoho_analytics: "revenue_reporting"
+  zoho_people: "resource_utilization_tracking"
+\end{minted} 

@@ -1,12 +1,92 @@
-flowchart LR
-  subgraph Zoho-One
-    CRM[Zoho CRM] --> API[Integration API]
-    Desk[Zoho Desk] --> API
-    Proj[Zoho Projects] --> API
-    Books[Zoho Books] --> API
+graph TB
+  subgraph "Zoho One MSP Ecosystem"
+    CRM[Zoho CRM<br/>Lead Management & Sales]
+    Desk[Zoho Desk<br/>Support & Ticketing] 
+    Projects[Zoho Projects<br/>Blueprint Workflows & PM]
+    Books[Zoho Books<br/>Billing & Financial Management]
+    People[Zoho People<br/>Team & Resource Management]
+    Expense[Zoho Expense<br/>Cost Tracking & Analysis]
+    Marketing[Marketing Automation<br/>Campaigns & Lead Nurturing]
+    Cliq[Zoho Cliq<br/>Team Communication Hub]
+    Analytics[Zoho Analytics<br/>Native BI & Reporting]
   end
-  API -->|writes to| PG[(PostgreSQL)]
-  API -->|writes to| NG[(Neo4j)]
-  Zoho-One -.->|Nightly ETL ⏰| PG
-  PG -- Reads/Writes --> Facade[GraphQL/REST Façade]
-  NG -- Reads/Writes --> Facade 
+  
+  subgraph "DFAP Integration Layer"
+    API[Integration API<br/>Event Orchestration]
+    MQ[RabbitMQ<br/>Event Stream Processing]
+    AIEngine[AI Analytics Engine<br/>Predictive Intelligence]
+  end
+  
+  subgraph "Data Architecture"
+    PG[(PostgreSQL<br/>Transactional Data)]
+    Neo4j[(Neo4j<br/>Relationship Analytics)]
+    Redis[Redis<br/>Real-time Cache & Sessions]
+    DW[(Data Warehouse<br/>Strategic Analytics)]
+  end
+  
+  subgraph "Business Intelligence Layer"
+    ExecDash[Executive Dashboard<br/>Revenue & KPIs]
+    OpsDash[Operations Dashboard<br/>Support & Projects]
+    FinDash[Financial Dashboard<br/>Billing & Margins]
+    MLPipeline[ML Pipeline<br/>Forecasting & Predictions]
+  end
+  
+  subgraph "MSP Business Workflows"
+    Blueprint1[Lead → Project<br/>Onboarding Flow]
+    Blueprint2[Support Lifecycle<br/>Ticket Resolution]
+    Blueprint3[Project Closure<br/>Billing & Delivery]
+  end
+  
+  %% MSP Integration Flow
+  CRM -->|Lead Qualified| API
+  API -->|Blueprint Trigger| Projects
+  Projects -->|Milestone Events| Books
+  Projects -->|Resource Needs| People
+  Desk -->|Support Tickets| API
+  People -->|Team Assignments| Projects
+  Expense -->|Cost Tracking| Books
+  Marketing -->|Campaign Data| Analytics
+  Cliq -->|Communication Events| API
+  
+  %% Blueprint Orchestration
+  API --> Blueprint1
+  API --> Blueprint2
+  API --> Blueprint3
+  Blueprint1 --> Projects
+  Blueprint2 --> Desk
+  Blueprint3 --> Books
+  
+  %% Event Processing Architecture
+  API --> MQ
+  MQ --> PG
+  MQ --> Neo4j
+  MQ --> Redis
+  
+  %% Analytics & Intelligence Pipeline
+  PG --> AIEngine
+  Neo4j --> AIEngine
+  Redis --> AIEngine
+  Analytics --> AIEngine
+  AIEngine --> MLPipeline
+  
+  %% Dashboard Data Flow
+  PG --> ExecDash
+  Neo4j --> OpsDash
+  AIEngine --> FinDash
+  MLPipeline --> ExecDash
+  
+  %% Strategic Data Warehouse
+  PG --> DW
+  Neo4j --> DW
+  Analytics --> DW
+  DW --> MLPipeline
+  
+  %% Real-time Operations
+  API <--> Redis
+  AIEngine <--> Redis
+  
+  %% Cross-module Integration
+  CRM -.->|Lead Attribution| Marketing
+  Books -.->|Revenue Data| Analytics
+  People -.->|Utilization| Analytics
+  Expense -.->|Cost Analysis| Books 
