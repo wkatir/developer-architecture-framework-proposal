@@ -1,11 +1,84 @@
-flowchart LR
-  Client((Client))
-  Project((Project))
-  Invoice((Invoice))
-  Equipment((Equipment))
-  Location((Location))
-
-  Client -->|OWNS, since| Project
-  Project -->|BILLED_BY, amount,date| Invoice
-  Invoice -->|USES, quantity| Equipment
-  Equipment -->|LOCATED_AT| Location 
+graph TB
+  subgraph "DFAP Graph Data Model - MSP Business Relationships"
+    %% Core Business Entities
+    Campaign[Campaign<br/>- id: uuid<br/>- name: string<br/>- type: email/social/paid<br/>- budget: decimal<br/>- start_date: date<br/>- end_date: date<br/>- status: active/completed]
+    
+    Lead[Lead<br/>- id: uuid<br/>- score: integer<br/>- source: string<br/>- value: decimal<br/>- status: new/qualified/converted<br/>- created_at: timestamp]
+    
+    Contact[Contact<br/>- id: uuid<br/>- first_name: string<br/>- last_name: string<br/>- email: string<br/>- phone: string<br/>- role: string<br/>- created_at: timestamp]
+    
+    Account[Account<br/>- id: uuid<br/>- name: string<br/>- industry: string<br/>- size: small/medium/enterprise<br/>- tier: basic/premium/enterprise<br/>- annual_revenue: decimal<br/>- created_at: timestamp]
+    
+    Ticket[Ticket<br/>- id: uuid<br/>- subject: string<br/>- priority: low/medium/high/critical<br/>- status: open/in_progress/resolved/closed<br/>- category: technical/billing/general<br/>- created_at: timestamp<br/>- resolved_at: timestamp]
+    
+    Project[Project<br/>- id: uuid<br/>- name: string<br/>- type: development/consulting/support<br/>- budget: decimal<br/>- status: planning/active/completed<br/>- start_date: date<br/>- end_date: date<br/>- profit_margin: decimal]
+    
+    Invoice[Invoice<br/>- id: uuid<br/>- number: string<br/>- amount: decimal<br/>- tax: decimal<br/>- total: decimal<br/>- status: draft/sent/paid/overdue<br/>- issue_date: date<br/>- due_date: date<br/>- paid_date: date]
+    
+    Task[Task<br/>- id: uuid<br/>- title: string<br/>- description: text<br/>- hours_estimated: decimal<br/>- hours_actual: decimal<br/>- status: todo/in_progress/completed<br/>- assigned_date: date<br/>- completed_date: date]
+    
+    Team[Team<br/>- id: uuid<br/>- name: string<br/>- department: string<br/>- capacity: integer<br/>- utilization: decimal<br/>- cost_per_hour: decimal]
+    
+    Employee[Employee<br/>- id: uuid<br/>- name: string<br/>- role: string<br/>- hourly_rate: decimal<br/>- skills: array<br/>- availability: decimal<br/>- hire_date: date]
+  end
+  
+  %% Business Flow Relationships
+  Campaign -->|GENERATES| Lead
+  Lead -->|CONVERTS_TO| Contact
+  Contact -->|BELONGS_TO| Account
+  Lead -->|CREATES| Ticket
+  Account -->|SUBMITS| Ticket
+  Contact -->|REPORTS| Ticket
+  
+  %% Project Creation Relationships
+  Lead -->|INITIATES| Project
+  Ticket -->|ESCALATES_TO| Project
+  Account -->|SPONSORS| Project
+  
+  %% Resource and Team Relationships
+  Project -->|ASSIGNED_TO| Team
+  Team -->|CONSISTS_OF| Employee
+  Project -->|CONTAINS| Task
+  Task -->|ASSIGNED_TO| Employee
+  Employee -->|WORKS_ON| Task
+  
+  %% Financial Relationships
+  Project -->|GENERATES| Invoice
+  Ticket -->|BILLABLE_TO| Invoice
+  Task -->|BILLABLE_TO| Invoice
+  Account -->|RECEIVES| Invoice
+  Invoice -->|PAYMENT_FROM| Account
+  
+  %% Support and Resolution Relationships
+  Ticket -->|RESOLVED_BY| Task
+  Project -->|RESOLVES| Ticket
+  Employee -->|RESOLVES| Ticket
+  
+  %% Analytics and Performance Relationships
+  Campaign -->|ATTRIBUTED_TO| Project
+  Project -->|CONTRIBUTES_TO| Account
+  Employee -->|UTILIZATION_ON| Project
+  Team -->|DELIVERS| Project
+  
+  %% Temporal Relationships (for analytics)
+  Lead -.->|TIMELINE| Project
+  Ticket -.->|TIMELINE| Invoice
+  Project -.->|TIMELINE| Invoice
+  Campaign -.->|TIMELINE| Lead
+  
+  %% Quality and Performance Metrics
+  Project -->|QUALITY_SCORE| Account
+  Employee -->|PERFORMANCE_ON| Project
+  Team -->|EFFICIENCY_ON| Project
+  Ticket -->|SATISFACTION_FOR| Account
+  
+  style Campaign fill:#FFE4B5
+  style Lead fill:#98FB98  
+  style Contact fill:#87CEEB
+  style Account fill:#DDA0DD
+  style Ticket fill:#F0E68C
+  style Project fill:#FFA07A
+  style Invoice fill:#90EE90
+  style Task fill:#FFB6C1
+  style Team fill:#D3D3D3
+  style Employee fill:#FFEFD5 

@@ -1,0 +1,143 @@
+graph TB
+  subgraph "Blueprint 1: Lead Onboarding"
+    B1S1[lead_received]
+    B1S2[review_pending]
+    B1S3[technical_review]
+    B1S4[approved]
+    B1S5[project_initiated]
+    B1S6[active]
+    B1S7[rejected/closed]
+    
+    B1S1 --> B1S2
+    B1S2 --> B1S3
+    B1S3 --> B1S4
+    B1S3 --> B1S7
+    B1S4 --> B1S5
+    B1S5 --> B1S6
+  end
+  
+  subgraph "Blueprint 2: Support Lifecycle"
+    B2S1[ticket_created]
+    B2S2[triage]
+    B2S3[l1_resolution]
+    B2S4[escalated]
+    B2S5[project_required]
+    B2S6[in_development]
+    B2S7[resolved]
+    B2S8[closed]
+    
+    B2S1 --> B2S2
+    B2S2 --> B2S3
+    B2S2 --> B2S4
+    B2S3 --> B2S7
+    B2S3 --> B2S4
+    B2S4 --> B2S7
+    B2S4 --> B2S5
+    B2S5 --> B2S6
+    B2S6 --> B2S7
+    B2S7 --> B2S8
+  end
+  
+  subgraph "Blueprint 3: Project Closure"
+    B3S1[delivery_ready]
+    B3S2[client_review]
+    B3S3[changes_requested]
+    B3S4[approved]
+    B3S5[billing_pending]
+    B3S6[invoiced]
+    B3S7[paid]
+    B3S8[evaluation]
+    B3S9[closed]
+    
+    B3S1 --> B3S2
+    B3S2 --> B3S3
+    B3S2 --> B3S4
+    B3S3 --> B3S2
+    B3S4 --> B3S5
+    B3S5 --> B3S6
+    B3S6 --> B3S7
+    B3S7 --> B3S8
+    B3S8 --> B3S9
+  end
+  
+  subgraph "Zoho One Integration Layer"
+    CRM[Zoho CRM<br/>Lead Management]
+    Desk[Zoho Desk<br/>Support Tickets]
+    Projects[Zoho Projects<br/>Project Management]
+    Books[Zoho Books<br/>Billing & Finance]
+    People[Zoho People<br/>Resource Management]
+    Expense[Zoho Expense<br/>Cost Tracking]
+    Marketing[Marketing Automation<br/>Campaigns]
+    Cliq[Zoho Cliq<br/>Communication]
+    Analytics[Zoho Analytics<br/>Reporting & BI]
+  end
+  
+  subgraph "DFAP Integration API"
+    API[Integration API<br/>Event Orchestration]
+    BlueprintEngine[Blueprint Engine<br/>State Machine]
+    EventBus[Event Bus<br/>RabbitMQ]
+    StateStore[(State Store<br/>PostgreSQL)]
+    GraphDB[(Graph Store<br/>Neo4j)]
+    Cache[Cache Layer<br/>Redis]
+  end
+  
+  %% Blueprint 1 - Lead Onboarding Integrations
+  CRM -->|"Lead Qualified Event"| API
+  API --> BlueprintEngine
+  BlueprintEngine --> B1S1
+  B1S2 --> Desk
+  B1S3 --> People
+  B1S4 --> Projects
+  B1S5 --> Books
+  B1S6 --> Cliq
+  
+  %% Blueprint 2 - Support Lifecycle Integrations  
+  Desk -->|"Ticket Created Event"| API
+  B2S2 --> People
+  B2S4 --> Projects
+  B2S5 --> Expense
+  B2S6 --> Books
+  B2S7 --> Analytics
+  B2S8 --> Marketing
+  
+  %% Blueprint 3 - Project Closure Integrations
+  Projects -->|"Milestone Complete Event"| API
+  B3S2 --> Cliq
+  B3S5 --> Books
+  B3S6 --> Expense
+  B3S7 --> People
+  B3S8 --> Analytics
+  B3S9 --> Marketing
+  
+  %% Data Flow and State Management
+  BlueprintEngine --> EventBus
+  EventBus --> StateStore
+  EventBus --> GraphDB
+  EventBus --> Cache
+  
+  %% Cross-Blueprint Dependencies
+  B1S6 -.->|"Project Created"| B3S1
+  B2S5 -.->|"Development Project"| B3S1
+  B1S4 -.->|"Client Onboarded"| B2S1
+  
+  %% Analytics and Reporting Integration
+  StateStore --> Analytics
+  GraphDB --> Analytics
+  Analytics --> Marketing
+  
+  %% Real-time Updates
+  API <--> Cache
+  BlueprintEngine <--> Cache
+  
+  %% Audit and Compliance
+  StateStore -.-> AuditLog[(Audit Log<br/>Immutable Store)]
+  EventBus -.-> AuditLog
+  
+  style B1S4 fill:#90EE90
+  style B1S7 fill:#FFB6C1
+  style B2S7 fill:#90EE90
+  style B2S5 fill:#FFD700
+  style B3S7 fill:#90EE90
+  style API fill:#87CEEB
+  style BlueprintEngine fill:#DDA0DD
+  style EventBus fill:#F0E68C 

@@ -1,25 +1,306 @@
 erDiagram
-    CLIENTS {
-      int id PK
-      string zoho_id UK "Unique Zoho identifier"
-      string name
-      datetime created_at
+    %% =============================================================================
+    %% DFAP MSP Entity-Relationship Diagram
+    %% Comprehensive data model for Zoho One integrations and MSP operations
+    %% =============================================================================
+
+    COMPANIES {
+        uuid id PK
+        varchar zoho_crm_id UK "Unique Zoho CRM identifier"
+        varchar zoho_books_id UK "Unique Zoho Books identifier"
+        varchar name "Company name"
+        varchar legal_name "Legal business name"
+        varchar industry "Industry classification"
+        varchar company_size "small/medium/enterprise"
+        decimal annual_revenue "Annual revenue"
+        varchar service_tier "basic/premium/enterprise"
+        varchar billing_type "hourly/monthly/project/retainer"
+        varchar primary_domain "Primary domain"
+        varchar status "prospect/active/suspended/churned"
+        timestamptz onboarded_at "Client onboarding date"
+        timestamptz created_at "Record creation timestamp"
+        timestamptz updated_at "Last update timestamp"
     }
+
+    CONTACTS {
+        uuid id PK
+        uuid company_id FK
+        varchar zoho_crm_id UK
+        varchar zoho_desk_id UK
+        varchar first_name "Contact first name"
+        varchar last_name "Contact last name"
+        varchar email UK "Contact email address"
+        varchar phone "Phone number"
+        varchar job_title "Job title"
+        varchar department "Department"
+        varchar seniority_level "junior/mid/senior/executive/c_level"
+        boolean primary_contact "Is primary contact"
+        boolean billing_contact "Is billing contact"
+        boolean technical_contact "Is technical contact"
+        varchar preferred_communication "email/phone/slack/teams"
+        varchar status "active/inactive/bounced"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    CAMPAIGNS {
+        uuid id PK
+        varchar zoho_campaigns_id UK
+        varchar zoho_marketing_id UK
+        varchar name "Campaign name"
+        text description "Campaign description"
+        varchar campaign_type "email/social/ppc/content/webinar/referral"
+        decimal budget "Campaign budget"
+        integer target_leads "Target lead count"
+        decimal target_revenue "Target revenue"
+        date start_date "Campaign start date"
+        date end_date "Campaign end date"
+        varchar status "draft/active/paused/completed/cancelled"
+        integer leads_generated "Actual leads generated"
+        decimal revenue_attributed "Revenue attributed to campaign"
+        varchar utm_source "UTM source parameter"
+        varchar utm_medium "UTM medium parameter"
+        varchar utm_campaign "UTM campaign parameter"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    LEADS {
+        uuid id PK
+        uuid campaign_id FK
+        varchar zoho_crm_id UK
+        varchar first_name "Lead first name"
+        varchar last_name "Lead last name"
+        varchar email "Lead email address"
+        varchar phone "Lead phone number"
+        varchar company_name "Lead company name"
+        integer lead_score "Lead score 0-100"
+        varchar lead_source "Lead source"
+        varchar lead_status "new/contacted/qualified/proposal/negotiation/converted/lost"
+        decimal estimated_budget "Estimated project budget"
+        varchar project_timeline "Project timeline"
+        text pain_points "Customer pain points"
+        text requirements "Project requirements"
+        uuid assigned_to FK "Assigned employee"
+        timestamptz last_contacted_at "Last contact timestamp"
+        timestamptz next_follow_up_at "Next follow up timestamp"
+        uuid converted_to_company_id FK "Converted company ID"
+        timestamptz converted_at "Conversion timestamp"
+        decimal conversion_value "Conversion value"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     PROJECTS {
-      int id PK
-      string zoho_id UK "Unique Zoho identifier"
-      int client_id FK
-      string name
-      string status
-      datetime created_at
+        uuid id PK
+        uuid company_id FK
+        uuid lead_id FK
+        varchar zoho_projects_id UK
+        varchar name "Project name"
+        text description "Project description"
+        varchar project_type "development/consulting/support/migration/training"
+        integer complexity_score "Complexity score 1-5"
+        date start_date "Project start date"
+        date end_date "Project end date"
+        decimal estimated_hours "Estimated hours"
+        decimal actual_hours "Actual hours spent"
+        decimal budget "Project budget"
+        decimal hourly_rate "Hourly billing rate"
+        decimal fixed_price "Fixed price amount"
+        decimal expenses_budget "Expenses budget"
+        decimal actual_expenses "Actual expenses"
+        decimal profit_margin "Profit margin percentage"
+        varchar status "planning/active/on_hold/completed/cancelled"
+        integer health_score "Project health score 1-5"
+        varchar risk_level "low/medium/high/critical"
+        uuid project_manager_id FK "Project manager employee ID"
+        timestamptz created_at
+        timestamptz updated_at
     }
+
+    TASKS {
+        uuid id PK
+        uuid project_id FK
+        uuid parent_task_id FK
+        varchar zoho_projects_task_id UK
+        varchar title "Task title"
+        text description "Task description"
+        varchar task_type "Task type/category"
+        varchar priority "low/medium/high/critical"
+        decimal estimated_hours "Estimated hours"
+        decimal actual_hours "Actual hours"
+        decimal billable_hours "Billable hours"
+        uuid assigned_to FK "Assigned employee"
+        varchar status "todo/in_progress/review/completed/cancelled"
+        date due_date "Task due date"
+        timestamptz started_at "Task start timestamp"
+        timestamptz completed_at "Task completion timestamp"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    TICKETS {
+        uuid id PK
+        uuid company_id FK
+        uuid contact_id FK
+        uuid project_id FK
+        varchar zoho_desk_id UK
+        varchar ticket_number UK "Unique ticket number"
+        varchar subject "Ticket subject"
+        text description "Ticket description"
+        varchar category "technical/billing/general/feature_request/bug"
+        varchar subcategory "Ticket subcategory"
+        varchar priority "low/medium/high/critical"
+        varchar status "open/in_progress/waiting/resolved/closed"
+        uuid assigned_to FK "Assigned employee"
+        boolean sla_breach "SLA breach indicator"
+        timestamptz first_response_at "First response timestamp"
+        timestamptz resolution_due_at "Resolution due timestamp"
+        timestamptz resolved_at "Resolution timestamp"
+        decimal time_spent_hours "Time spent on ticket"
+        boolean billable "Is ticket billable"
+        integer satisfaction_score "Customer satisfaction 1-5"
+        text feedback "Customer feedback"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     INVOICES {
-      int id PK
-      string zoho_id UK "Unique Zoho identifier"
-      int project_id FK
-      decimal amount
-      datetime issued_at
-      datetime created_at
+        uuid id PK
+        uuid company_id FK
+        uuid project_id FK
+        varchar zoho_books_id UK
+        varchar invoice_number UK "Unique invoice number"
+        varchar invoice_type "service/product/subscription/expense"
+        decimal subtotal "Invoice subtotal"
+        decimal tax_rate "Tax rate percentage"
+        decimal tax_amount "Tax amount"
+        decimal discount_amount "Discount amount"
+        decimal total_amount "Total invoice amount"
+        date issue_date "Invoice issue date"
+        date due_date "Payment due date"
+        date paid_date "Payment received date"
+        varchar status "draft/sent/viewed/paid/overdue/cancelled"
+        varchar payment_method "Payment method used"
+        varchar payment_reference "Payment reference number"
+        varchar payment_terms "Payment terms"
+        text notes "Invoice notes"
+        timestamptz created_at
+        timestamptz updated_at
     }
-    CLIENTS ||--o{ PROJECTS : owns
-    PROJECTS ||--o{ INVOICES : billed_by 
+
+    INVOICE_LINE_ITEMS {
+        uuid id PK
+        uuid invoice_id FK
+        uuid task_id FK
+        uuid ticket_id FK
+        varchar item_type "labor/expense/product/service"
+        varchar description "Line item description"
+        decimal quantity "Quantity"
+        decimal unit_price "Unit price"
+        decimal total_price "Total line price"
+        decimal hours "Hours for time-based items"
+        decimal hourly_rate "Hourly rate for time-based items"
+        timestamptz created_at
+    }
+
+    EMPLOYEES {
+        uuid id PK
+        varchar zoho_people_id UK
+        varchar employee_number UK "Employee number"
+        varchar first_name "Employee first name"
+        varchar last_name "Employee last name"
+        varchar email UK "Employee email"
+        varchar phone "Employee phone"
+        varchar job_title "Job title"
+        varchar department "Department"
+        varchar team "Team name"
+        varchar employment_type "full_time/part_time/contractor/intern"
+        decimal hourly_rate "Hourly billing rate"
+        decimal salary "Annual salary"
+        decimal cost_per_hour "Cost per hour including benefits"
+        jsonb skills "Skills and competencies"
+        jsonb certifications "Professional certifications"
+        decimal availability_percentage "Availability percentage"
+        varchar status "active/inactive/terminated"
+        date hire_date "Hire date"
+        date termination_date "Termination date"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    TIME_ENTRIES {
+        uuid id PK
+        uuid employee_id FK
+        uuid project_id FK
+        uuid task_id FK
+        uuid ticket_id FK
+        date date "Time entry date"
+        decimal hours "Hours worked"
+        text description "Work description"
+        boolean billable "Is time billable"
+        boolean approved "Is time entry approved"
+        decimal hourly_rate "Billing rate"
+        decimal cost_rate "Cost rate"
+        uuid approved_by FK "Approved by employee"
+        timestamptz approved_at "Approval timestamp"
+        timestamptz created_at
+    }
+
+    %% =============================================================================
+    %% ENTITY RELATIONSHIPS
+    %% =============================================================================
+
+    %% Company-centered relationships
+    COMPANIES ||--o{ CONTACTS : "has contacts"
+    COMPANIES ||--o{ PROJECTS : "sponsors projects"
+    COMPANIES ||--o{ TICKETS : "submits tickets"
+    COMPANIES ||--o{ INVOICES : "receives invoices"
+
+    %% Marketing and lead flow
+    CAMPAIGNS ||--o{ LEADS : "generates leads"
+    LEADS ||--o| COMPANIES : "converts to"
+    LEADS ||--o| PROJECTS : "initiates"
+
+    %% Project management relationships
+    PROJECTS ||--o{ TASKS : "contains tasks"
+    PROJECTS ||--o{ TICKETS : "may generate tickets"
+    PROJECTS ||--o{ INVOICES : "generates invoices"
+    PROJECTS }o--|| EMPLOYEES : "managed by"
+
+    %% Task relationships
+    TASKS ||--o{ TASKS : "parent-child tasks"
+    TASKS }o--|| EMPLOYEES : "assigned to"
+    TASKS ||--o{ TIME_ENTRIES : "tracks time"
+    TASKS ||--o{ INVOICE_LINE_ITEMS : "billed as"
+
+    %% Support ticket relationships
+    TICKETS }o--|| CONTACTS : "reported by"
+    TICKETS }o--o| PROJECTS : "may escalate to"
+    TICKETS }o--|| EMPLOYEES : "assigned to"
+    TICKETS ||--o{ TIME_ENTRIES : "tracks support time"
+    TICKETS ||--o{ INVOICE_LINE_ITEMS : "may be billed"
+
+    %% Financial relationships
+    INVOICES ||--o{ INVOICE_LINE_ITEMS : "contains line items"
+    INVOICES }o--o| PROJECTS : "bills for project"
+
+    %% Employee and time tracking
+    EMPLOYEES ||--o{ TASKS : "assigned tasks"
+    EMPLOYEES ||--o{ TICKETS : "assigned tickets"
+    EMPLOYEES ||--o{ PROJECTS : "manages projects"
+    EMPLOYEES ||--o{ TIME_ENTRIES : "logs time"
+    EMPLOYEES ||--o{ LEADS : "assigned leads"
+
+    %% Time tracking relationships
+    TIME_ENTRIES }o--o| PROJECTS : "time on project"
+    TIME_ENTRIES }o--o| TASKS : "time on task"
+    TIME_ENTRIES }o--o| TICKETS : "time on ticket"
+    TIME_ENTRIES }o--|| EMPLOYEES : "approved by"
+
+    %% Cross-module relationships (Zoho One integration points)
+    CONTACTS }o--|| COMPANIES : "primary contact"
+    LEADS }o--|| EMPLOYEES : "assigned to"
+    PROJECTS }o--|| EMPLOYEES : "project manager"
+    TASKS }o--|| EMPLOYEES : "task assignee"
+    TICKETS }o--|| EMPLOYEES : "ticket assignee" 

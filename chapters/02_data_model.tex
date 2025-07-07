@@ -1,105 +1,433 @@
-\section{Data Model \& Integration Strategy}
+\section{Data Architecture \& Technology Stack}
 
-\subsection{Relational Model (PostgreSQL)}
-\begin{verbatim}
-CREATE TABLE clients (
-  id SERIAL PRIMARY KEY,
-  zoho_id TEXT UNIQUE NOT NULL,
-  name TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
--- projects, invoices likewise...
-\end{verbatim}
+\subsection{Architecture Decision Records (ADRs)}
 
-\subsection{ER Diagram}
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=\linewidth]{diagrams/data_model_er.svg}
-  \caption{Entity-Relationship Diagram (PostgreSQL)}
-\end{figure}
+The DFAP framework leverages a carefully selected technology stack optimized for MSP operations at scale. Each technology choice addresses specific business and technical requirements.
 
-\subsection{Graph Model (Neo4j)}
+\subsubsection{Decision 1: PostgreSQL as Primary Transactional Database}
+
+\textbf{Context:} MSP operations require ACID compliance for financial data, complex joins for reporting, and mature ecosystem support.
+
+\textbf{Decision:} PostgreSQL 15+ as the primary relational database.
+
+\textbf{Rationale:}
+\begin{itemize}
+  \item \textbf{ACID Compliance:} Critical for financial transactions (invoices, payments, billing)
+  \item \textbf{JSON Support:} Native JSONB for flexible data (employee skills, configurations)
+  \item \textbf{Performance:} Excellent query optimizer, partial indexes, materialized views
+  \item \textbf{Extensions:} UUID support, full-text search, time-series data (for monitoring)
+  \item \textbf{Ecosystem:} Mature tooling (pgAdmin, monitoring, backup solutions)
+  \item \textbf{Cost:} Open-source with enterprise features available
+\end{itemize}
+
+\textbf{Alternatives Considered:}
+\begin{itemize}
+  \item \textbf{MySQL:} Rejected due to limited JSON support and less advanced query features
+  \item \textbf{MongoDB:} Rejected due to lack of ACID compliance for financial operations
+  \item \textbf{SQL Server:} Rejected due to licensing costs and cloud vendor lock-in
+\end{itemize}
+
+\subsubsection{Decision 2: Neo4j for Relationship Analytics}
+
+\textbf{Context:} MSP business involves complex relationships: campaigns → leads → projects → invoices, with multi-hop analytics requirements.
+
+\textbf{Decision:} Neo4j graph database for relationship analysis and business intelligence.
+
+\textbf{Rationale:}
+\begin{itemize}
+  \item \textbf{Graph Traversals:} Efficient multi-hop queries (lead attribution across 6+ hops)
+  \item \textbf{Relationship Analysis:} Natural modeling of MSP business flows
+  \item \textbf{Cypher Query Language:} Expressive for complex business questions
+  \item \textbf{Performance:} Index-free adjacency for relationship-heavy queries
+  \item \textbf{Analytics:} Built-in graph algorithms (PageRank, community detection)
+\end{itemize}
+
+\textbf{Use Cases:}
+\begin{itemize}
+  \item Revenue attribution analysis
+  \item Customer churn prediction based on relationship patterns
+  \item Campaign effectiveness across multiple touchpoints
+  \item Project resource optimization
+\end{itemize}
+
+\subsubsection{Decision 3: NestJS as API Framework}
+
+\textbf{Context:} Need enterprise-grade API framework supporting microservices, strong typing, and rapid development.
+
+\textbf{Decision:} NestJS with TypeScript for the integration API layer.
+
+\textbf{Rationale:}
+\begin{itemize}
+  \item \textbf{TypeScript:} Strong typing reduces bugs, improves developer experience
+  \item \textbf{Modularity:} Clean architecture with dependency injection
+  \item \textbf{Scalability:} Built-in support for microservices, message queues
+  \item \textbf{Documentation:} Automatic OpenAPI/Swagger generation
+  \item \textbf{Testing:} Comprehensive testing utilities and mocking
+  \item \textbf{Ecosystem:} Rich plugin ecosystem (TypeORM, Bull, etc.)
+\end{itemize}
+
+\textbf{Alternatives Considered:}
+\begin{itemize}
+  \item \textbf{Express.js:} Too minimal, requires significant boilerplate
+  \item \textbf{Spring Boot:} Java ecosystem adds complexity, slower development
+  \item \textbf{FastAPI:} Python performance limitations for high concurrency
+\end{itemize}
+
+\subsubsection{Decision 4: Terraform for Infrastructure as Code}
+
+\textbf{Context:} Multi-cloud deployment requirements with reproducible, version-controlled infrastructure.
+
+\textbf{Decision:} Terraform for infrastructure provisioning and management.
+
+\textbf{Rationale:}
+\begin{itemize}
+  \item \textbf{Multi-Cloud:} Single tool for AWS, Azure, GCP deployments
+  \item \textbf{State Management:} Tracks infrastructure changes and dependencies
+  \item \textbf{Modularity:} Reusable modules for different environments
+  \item \textbf{Community:} Large provider ecosystem and community modules
+  \item \textbf{Version Control:} Infrastructure changes tracked in Git
+  \item \textbf{Compliance:} Policy as code with Sentinel/OPA integration
+\end{itemize}
+
+\subsection{Comprehensive Database Schema}
+
+The DFAP database schema models the complete MSP business lifecycle with 12 core entities and optimized relationships.
+
+\subsubsection{Core Business Entities}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Entity} & \textbf{Purpose} & \textbf{Key Features} & \textbf{Zoho Integration} \\
+\hline
+Companies & Client organizations & Service tiers, health scores & CRM + Books \\
+\hline
+Contacts & People within companies & Roles, preferences & CRM + Desk \\
+\hline
+Campaigns & Marketing initiatives & ROI tracking, attribution & Campaigns + Marketing \\
+\hline
+Leads & Potential clients & Scoring, qualification & CRM \\
+\hline
+Projects & Service delivery & Budget, timeline, health & Projects \\
+\hline
+Tasks & Work breakdown & Time tracking, billing & Projects \\
+\hline
+Tickets & Support requests & SLA tracking, escalation & Desk \\
+\hline
+Invoices & Financial billing & Payment tracking, taxes & Books \\
+\hline
+Employees & Team members & Skills, utilization & People \\
+\hline
+Time Entries & Work logging & Billability, approval & Projects + Desk \\
+\hline
+\end{tabular}
+\caption{Core database entities and their business functions}
+\end{table}
+
+\subsubsection{Advanced Schema Features}
+
+\textbf{1. UUID Primary Keys}
+\begin{minted}{sql}
+-- Better for distributed systems and API exposure
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4()
+\end{minted}
+
+\textbf{2. Audit Trail Integration}
+\begin{minted}{sql}
+-- Automatic timestamp management
+created_at TIMESTAMPTZ DEFAULT NOW(),
+updated_at TIMESTAMPTZ DEFAULT NOW(),
+created_by UUID,
+updated_by UUID
+\end{minted}
+
+\textbf{3. Business Logic Constraints}
+\begin{minted}{sql}
+-- Enforce data quality at database level
+CHECK (lead_score >= 0 AND lead_score <= 100),
+CHECK (service_tier IN ('basic', 'premium', 'enterprise')),
+CHECK (complexity_score >= 1 AND complexity_score <= 5)
+\end{minted}
+
+\textbf{4. Performance Optimization}
+\begin{minted}{sql}
+-- Strategic indexing for query patterns
+CREATE INDEX idx_tickets_sla ON tickets(sla_breach, resolution_due_at) 
+WHERE sla_breach = TRUE;
+
+CREATE INDEX idx_invoices_overdue ON invoices(due_date, status) 
+WHERE status = 'sent';
+\end{minted}
+
+\subsection{Graph Model for Business Intelligence}
+
+The Neo4j graph model captures the complex relationships between MSP business entities, enabling advanced analytics impossible with traditional SQL.
+
+\subsubsection{Graph Schema Design}
+
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{diagrams/graph_model.svg}
-  \caption{Graph sketch for lineage and complex relationships}
+  \caption{Neo4j graph model showing MSP business relationships}
 \end{figure}
 
-\subsection{Integration Patterns}
+\textbf{Key Relationship Types:}
 \begin{itemize}
-  \item \textbf{Real-time Webhooks}: Zoho → \texttt{/zoho/webhook} → RabbitMQ
-  \item \textbf{Nightly ETL}: Full table snapshots for analytics
-  \item \textbf{GraphQL Federation}: Stitch Zoho REST + local data under one schema
+  \item \texttt{GENERATES}: Campaign → Lead, Project → Invoice
+  \item \texttt{CONVERTS\_TO}: Lead → Company
+  \item \texttt{SPONSORS}: Company → Project
+  \item \texttt{ESCALATES\_TO}: Ticket → Project
+  \item \texttt{ASSIGNED\_TO}: Task/Ticket → Employee
+  \item \texttt{BILLABLE\_TO}: Task/Ticket → Invoice
 \end{itemize}
 
-\subsubsection{Apollo Federation Example}
-\begin{minted}{javascript}
-// Apollo Federation example
-const zohoREST = new RESTDataSource({...});
-const typeDefs = gql`
-  extend type Query {
-    zohoContacts: [Contact]
-  }
-`;
-const resolvers = {
-  Query: { 
-    zohoContacts: (_, __, { dataSources }) => 
-      dataSources.zohoREST.getContacts() 
-  }
-};
-\end{minted} 
+\subsubsection{Advanced Graph Queries}
 
-\subsection{RESTful API Architecture}
+\textbf{1. Revenue Attribution Analysis}
+\begin{minted}{cypher}
+// Find tickets that resulted in billable projects this month
+MATCH (t:Ticket)-[:ESCALATES_TO]->(p:Project)-[:GENERATES]->(i:Invoice)
+WHERE i.issue_date >= date('2024-01-01') 
+  AND i.status IN ['paid', 'sent']
+RETURN t.ticket_number, p.name, i.total_amount
+ORDER BY i.total_amount DESC;
+\end{minted}
 
-The integration layer exposes a well-designed API following REST principles and enterprise patterns:
+\textbf{2. Campaign ROI Analysis}
+\begin{minted}{cypher}
+// Calculate campaign effectiveness with multi-hop attribution
+MATCH (cp:Campaign)-[:GENERATES]->(l:Lead)-[:INITIATES]->(p:Project)
+      -[:GENERATES]->(i:Invoice)
+WHERE i.status = 'paid'
+WITH cp, SUM(i.total_amount) as revenue, cp.budget as cost
+RETURN cp.name, revenue, cost, 
+       ROUND((revenue / cost), 2) as roi_ratio
+ORDER BY roi_ratio DESC;
+\end{minted}
+
+\textbf{3. Customer Health Scoring}
+\begin{minted}{cypher}
+// Multi-dimensional customer health analysis
+MATCH (c:Company)
+OPTIONAL MATCH (c)-[:SUBMITS]->(t:Ticket)
+WHERE t.created_at >= datetime() - duration('P90D')
+OPTIONAL MATCH (c)-[:RECEIVES]->(i:Invoice)
+WHERE i.status = 'overdue'
+WITH c, COUNT(t) as tickets, COUNT(i) as overdue_invoices
+RETURN c.name, tickets, overdue_invoices,
+       CASE 
+         WHEN overdue_invoices > 2 OR tickets > 10 THEN 'HIGH_RISK'
+         WHEN overdue_invoices > 0 OR tickets > 5 THEN 'MEDIUM_RISK'
+         ELSE 'LOW_RISK'
+       END as churn_risk;
+\end{minted}
+
+\subsection{Data Integration Patterns}
+
+\subsubsection{Hybrid Data Architecture}
+
+The DFAP framework employs a sophisticated data architecture combining relational and graph databases:
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{diagrams/data_model_er.svg}
+  \caption{Complete entity-relationship diagram with 12 core entities}
+\end{figure}
+
+\textbf{Data Flow Pattern:}
+\begin{enumerate}
+  \item \textbf{Transactional Writes:} All CRUD operations go to PostgreSQL
+  \item \textbf{Event Streaming:} Changes propagate to Neo4j via message queue
+  \item \textbf{Analytics Queries:} Complex relationship queries use Neo4j
+  \item \textbf{Reporting:} Combine both data sources for comprehensive views
+\end{enumerate}
+
+\subsubsection{Real-time Synchronization}
+
+\begin{minted}{typescript}
+// Event-driven synchronization pattern
+@EventHandler('CompanyCreated')
+async handleCompanyCreated(event: CompanyCreatedEvent) {
+  // Update transactional database
+  await this.postgresRepository.save(event.company);
+  
+  // Propagate to graph database
+  await this.neo4jService.createNode('Company', {
+    id: event.company.id,
+    name: event.company.name,
+    service_tier: event.company.serviceTier
+  });
+  
+  // Trigger business workflows
+  await this.blueprintEngine.trigger('company_onboarding', event);
+}
+\end{minted}
+
+\subsection{Integration with Zoho One Ecosystem}
+
+\subsubsection{API Integration Strategy}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Zoho Module} & \textbf{Integration Type} & \textbf{Data Flow} & \textbf{Frequency} \\
+\hline
+CRM & Webhooks + REST & Bidirectional & Real-time \\
+\hline
+Desk & Webhooks + REST & Bidirectional & Real-time \\
+\hline
+Projects & REST + Bulk API & Pull-based & Hourly sync \\
+\hline
+Books & Webhooks + REST & Push invoices & Real-time \\
+\hline
+People & REST API & Pull employee data & Daily sync \\
+\hline
+Analytics & REST API & Data export & Nightly ETL \\
+\hline
+\end{tabular}
+\caption{Zoho One module integration patterns}
+\end{table}
+
+\subsubsection{OAuth 2.0 Security Model}
 
 \begin{minted}{yaml}
-# api-specification.yml
-openapi: 3.0.3
-info:
-  title: DFAP Integration API
-  version: 1.0.0
+# OAuth scopes for each Zoho module
+zoho_oauth_scopes:
+  crm: "ZohoCRM.modules.ALL,ZohoCRM.users.READ"
+  desk: "Desk.tickets.ALL,Desk.contacts.READ"  
+  projects: "ZohoProjects.projects.ALL,ZohoProjects.timesheets.READ"
+  books: "ZohoBooks.invoices.ALL,ZohoBooks.contacts.READ"
+  people: "ZohoPeople.employee.READ,ZohoPeople.attendance.READ"
   
-paths:
-  /api/v1/projects:
-    post:
-      summary: Create project from qualified lead
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                lead_id: { type: string, format: uuid }
-                client_id: { type: string }
-                estimated_hours: { type: integer, minimum: 1 }
-                complexity_score: { type: integer, minimum: 1, maximum: 5 }
-      responses:
-        201:
-          description: Project created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Project'
-                
-  /api/v1/analytics/project-health/{project_id}:
-    get:
-      summary: Get project health metrics (demonstrates graph queries)
-      parameters:
-        - name: project_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        200:
-          description: Project health analysis
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  health_score: { type: number, format: float }
-                  risk_factors: { type: array, items: { type: string } }
-                  recommendation: { type: string }
-                  billing_forecast: { type: number, format: float }
+# Scope-based access control
+security_matrix:
+  webhook_processing: ["webhook:read", "webhook:write"]
+  financial_operations: ["books:read", "books:write", "expense:read"]
+  analytics_access: ["analytics:read", "reports:read"]
+\end{minted}
+
+\subsection{Performance and Scalability Considerations}
+
+\subsubsection{Database Optimization}
+
+\textbf{1. Index Strategy}
+\begin{minted}{sql}
+-- Composite indexes for common query patterns
+CREATE INDEX idx_project_health_composite 
+ON projects(company_id, status, health_score) 
+WHERE status = 'active';
+
+-- Partial indexes for specific conditions
+CREATE INDEX idx_overdue_invoices 
+ON invoices(due_date, total_amount) 
+WHERE status = 'sent' AND due_date < CURRENT_DATE;
+\end{minted}
+
+\textbf{2. Materialized Views for Analytics}
+\begin{minted}{sql}
+-- Pre-computed company health dashboard
+CREATE MATERIALIZED VIEW company_health_dashboard AS
+SELECT 
+  c.id, c.name, c.service_tier,
+  COUNT(t.id) as total_tickets,
+  COUNT(CASE WHEN t.status = 'open' THEN 1 END) as open_tickets,
+  SUM(CASE WHEN i.status = 'paid' THEN i.total_amount ELSE 0 END) 
+    as paid_amount_ytd
+FROM companies c
+LEFT JOIN tickets t ON c.id = t.company_id
+LEFT JOIN invoices i ON c.id = i.company_id
+GROUP BY c.id, c.name, c.service_tier;
+
+-- Refresh strategy
+CREATE OR REPLACE FUNCTION refresh_company_health()
+RETURNS void AS $$
+BEGIN
+  REFRESH MATERIALIZED VIEW CONCURRENTLY company_health_dashboard;
+END;
+$$ LANGUAGE plpgsql;
+\end{minted}
+
+\subsubsection{Caching Strategy}
+
+\begin{minted}{typescript}
+// Redis caching for frequently accessed data
+@Injectable()
+export class CompanyService {
+  @Cacheable('company_health', 300) // Cache for 5 minutes
+  async getCompanyHealth(companyId: string): Promise<CompanyHealth> {
+    // Expensive calculation cached in Redis
+    return this.calculateHealthMetrics(companyId);
+  }
+  
+  @CacheEvict('company_health')
+  async updateCompany(companyId: string, updates: UpdateCompanyDto) {
+    // Invalidate cache on updates
+    return this.repository.update(companyId, updates);
+  }
+}
+\end{minted}
+
+\subsection{Business Intelligence Views}
+
+\subsubsection{Executive Dashboard Metrics}
+
+\begin{minted}{sql}
+-- Executive KPI summary view
+CREATE VIEW executive_dashboard AS
+WITH monthly_metrics AS (
+  SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as new_companies,
+    SUM(annual_revenue) as pipeline_value
+  FROM companies 
+  WHERE created_at >= CURRENT_DATE - INTERVAL '12 months'
+  GROUP BY DATE_TRUNC('month', created_at)
+),
+revenue_metrics AS (
+  SELECT 
+    DATE_TRUNC('month', issue_date) as month,
+    SUM(total_amount) as monthly_revenue,
+    COUNT(*) as invoices_issued
+  FROM invoices
+  WHERE status = 'paid' 
+    AND issue_date >= CURRENT_DATE - INTERVAL '12 months'
+  GROUP BY DATE_TRUNC('month', issue_date)
+)
+SELECT 
+  m.month,
+  m.new_companies,
+  m.pipeline_value,
+  r.monthly_revenue,
+  r.invoices_issued,
+  ROUND(r.monthly_revenue / m.new_companies, 2) as revenue_per_new_client
+FROM monthly_metrics m
+LEFT JOIN revenue_metrics r ON m.month = r.month
+ORDER BY m.month DESC;
+\end{minted}
+
+\subsubsection{Operational Metrics}
+
+\begin{minted}{sql}
+-- Support team performance metrics
+CREATE VIEW support_team_metrics AS
+SELECT 
+  e.first_name || ' ' || e.last_name as employee_name,
+  e.department,
+  COUNT(t.id) as tickets_assigned,
+  COUNT(CASE WHEN t.status = 'resolved' THEN 1 END) as tickets_resolved,
+  AVG(EXTRACT(EPOCH FROM (t.resolved_at - t.created_at))/3600) 
+    as avg_resolution_hours,
+  COUNT(CASE WHEN t.sla_breach = TRUE THEN 1 END) as sla_breaches,
+  ROUND(
+    COUNT(CASE WHEN t.status = 'resolved' THEN 1 END) * 100.0 / 
+    NULLIF(COUNT(t.id), 0), 2
+  ) as resolution_rate_percent
+FROM employees e
+LEFT JOIN tickets t ON e.id = t.assigned_to
+WHERE e.department = 'Support'
+  AND t.created_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY e.id, e.first_name, e.last_name, e.department
+ORDER BY resolution_rate_percent DESC;
 \end{minted} 

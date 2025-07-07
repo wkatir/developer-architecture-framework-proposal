@@ -1,71 +1,702 @@
-\section{Cloud-Agnostic Infrastructure}
+\section{Cloud Infrastructure \& Deployment Architecture}
 
-\subsection{Infrastructure as Code \& Portability}
-The DFAP framework leverages cloud-agnostic patterns to ensure:
+\subsection{Infrastructure Architecture Decisions}
+
+The DFAP framework implements a cloud-agnostic, scalable infrastructure designed for MSP operations requiring high availability, security, and cost optimization.
+
+\subsubsection{Decision 1: Multi-Cloud Strategy}
+
+\textbf{Context:} MSPs need flexibility to deploy across different cloud providers based on client requirements, cost optimization, and risk mitigation.
+
+\textbf{Decision:} Cloud-agnostic architecture using Terraform with provider-specific optimizations.
+
+\textbf{Rationale:}
 \begin{itemize}
-  \item \textbf{Multi-Cloud Readiness:} Terraform modules work across AWS, Azure, GCP
-  \item \textbf{Vendor Lock-in Avoidance:} Standard APIs and open-source technologies
-  \item \textbf{Cost Optimization:} Flexible deployment based on pricing and features
-  \item \textbf{Disaster Recovery:} Cross-region and cross-cloud backup strategies
+  \item \textbf{Vendor Independence:} Avoid lock-in to single cloud provider
+  \item \textbf{Cost Optimization:} Leverage competitive pricing across providers
+  \item \textbf{Geographic Distribution:} Deploy closer to clients globally
+  \item \textbf{Risk Mitigation:} Disaster recovery across cloud providers
+  \item \textbf{Compliance:} Meet data residency requirements per jurisdiction
 \end{itemize}
 
-\subsection{Core Managed Services}
+\subsubsection{Decision 2: Containerized Microservices Architecture}
+
+\textbf{Context:} Need scalable, maintainable architecture supporting rapid development and independent service scaling.
+
+\textbf{Decision:} Docker containers orchestrated with Kubernetes/ECS for production deployments.
+
+\textbf{Rationale:}
+\begin{itemize}
+  \item \textbf{Scalability:} Independent scaling of API, worker, and database components
+  \item \textbf{Development Velocity:} Consistent environments from dev to production
+  \item \textbf{Resource Efficiency:} Better utilization compared to VM-based deployments
+  \item \textbf{CI/CD Integration:} Streamlined deployment pipelines
+  \item \textbf{Service Isolation:} Failure containment and independent updates
+\end{itemize}
+
+\subsubsection{Decision 3: Event-Driven Architecture with Message Queues}
+
+\textbf{Context:} MSP operations require loose coupling between Zoho modules and internal processing for scalability and reliability.
+
+\textbf{Decision:} RabbitMQ/SQS for event streaming with dead letter queues and retry mechanisms.
+
+\textbf{Rationale:}
+\begin{itemize}
+  \item \textbf{Decoupling:} Zoho webhooks processed asynchronously
+  \item \textbf{Reliability:} Message persistence and retry mechanisms
+  \item \textbf{Scalability:} Horizontal scaling of message processors
+  \item \textbf{Observability:} Message tracking and monitoring
+  \item \textbf{Flexibility:} Easy addition of new event consumers
+\end{itemize}
+
+\subsection{Cloud Provider Service Mapping}
+
 \begin{table}[h]
 \centering
-\begin{tabular}{|l|l|l|l|}
+\begin{tabular}{|l|l|l|l|l|}
 \hline
-\textbf{Service Type} & \textbf{AWS} & \textbf{Azure} & \textbf{GCP} \\
+\textbf{Component} & \textbf{AWS} & \textbf{Azure} & \textbf{GCP} & \textbf{Justification} \\
 \hline
-Compute & ECS/Fargate & Container Instances & Cloud Run \\
+Compute & ECS Fargate & Container Instances & Cloud Run & Serverless containers \\
 \hline
-RDBMS & RDS PostgreSQL & Azure Database & Cloud SQL \\
+Database & RDS PostgreSQL & Database for PostgreSQL & Cloud SQL & Managed PostgreSQL \\
 \hline
-Message Queue & SQS/EventBridge & Service Bus & Pub/Sub \\
+Graph DB & Neptune & CosmosDB Gremlin & Neo4j on GKE & Graph analytics \\
 \hline
-Graph Database & Neptune & CosmosDB Gremlin & Neo4j on GKE \\
+Cache & ElastiCache Redis & Cache for Redis & Memorystore & Session \& query cache \\
 \hline
-Secrets Management & Secrets Manager & Key Vault & Secret Manager \\
+Message Queue & SQS + EventBridge & Service Bus & Pub/Sub & Event streaming \\
 \hline
-Load Balancer & ALB/NLB & Load Balancer & Cloud Load Balancing \\
+Object Storage & S3 & Blob Storage & Cloud Storage & File \& backup storage \\
+\hline
+Secrets & Secrets Manager & Key Vault & Secret Manager & Credential management \\
+\hline
+Load Balancer & ALB/NLB & Load Balancer & Cloud Load Balancing & Traffic distribution \\
+\hline
+CDN & CloudFront & CDN & Cloud CDN & Static asset delivery \\
+\hline
+Monitoring & CloudWatch & Monitor & Cloud Monitoring & Observability \\
 \hline
 \end{tabular}
-\caption{Cloud service mappings for core infrastructure components}
+\caption{Cloud service mappings for DFAP infrastructure components}
 \end{table}
 
-\subsection{Networking \& Security}
-\begin{itemize}
-  \item \textbf{VPC Design:} Private subnets for databases, public for load balancers
-  \item \textbf{Security Groups:} Least-privilege network access controls
-  \item \textbf{WAF Integration:} Web application firewall for API protection
-  \item \textbf{VPN/Transit Gateway:} Secure connectivity to on-premises systems
-  \item \textbf{Network Monitoring:} Flow logs and intrusion detection
-\end{itemize}
+\subsection{Network Architecture \& Security}
 
-\subsection{CI/CD Integration}
-\begin{enumerate}
-  \item \textbf{Infrastructure Pipeline:} Terraform plan/apply with approval gates
-  \item \textbf{Application Pipeline:} Container build → test → deploy
-  \item \textbf{Environment Promotion:} Dev → Staging → Production workflow
-  \item \textbf{Rollback Capabilities:} Automated failure detection and reversion
-\end{enumerate}
+\subsubsection{VPC Design and Network Segmentation}
 
-\subsection{Observability \& SLOs}
-\begin{itemize}
-  \item \textbf{Metrics:} Application performance, infrastructure health
-  \item \textbf{Logging:} Centralized log aggregation and analysis
-  \item \textbf{Tracing:} Distributed request tracing across services
-  \item \textbf{Alerting:} SLO-based alerts with escalation policies
-  \item \textbf{SLOs:} 99.9\% uptime, <200ms API response, <1\% error rate
-\end{itemize}
-
-\subsection{Generic Cloud Architecture}
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{diagrams/cloud_architecture_general.svg}
-  \caption{Cloud-agnostic infrastructure pattern with private/public subnet separation}
+  \caption{Multi-tier network architecture with security zones}
 \end{figure}
 
-% TODO: Add specific Terraform module examples
-% TODO: Include cost estimation and optimization strategies
-% TODO: Add disaster recovery and backup procedures
-% TODO: Define monitoring and alerting runbooks 
+\textbf{Network Tier Design:}
+\begin{itemize}
+  \item \textbf{Public Subnets:} Load balancers, NAT gateways, bastion hosts
+  \item \textbf{Private Subnets (App):} Application containers, API services
+  \item \textbf{Private Subnets (Data):} Databases, cache, message queues
+  \item \textbf{Management Subnet:} Monitoring, logging, deployment tools
+\end{itemize}
+
+\subsubsection{Security Group Configuration}
+
+\begin{minted}{terraform}
+# Application tier security group
+resource "aws_security_group" "app_tier" {
+  name_prefix = "${var.project_name}-app-"
+  vpc_id      = module.vpc.vpc_id
+
+  # Allow HTTPS from load balancer
+  ingress {
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  # Allow database access to data tier
+  egress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.data_tier.id]
+  }
+
+  tags = {
+    Name = "${var.project_name}-app-tier"
+    Tier = "application"
+  }
+}
+
+# Database tier security group (most restrictive)
+resource "aws_security_group" "data_tier" {
+  name_prefix = "${var.project_name}-data-"
+  vpc_id      = module.vpc.vpc_id
+
+  # Only allow PostgreSQL from app tier
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app_tier.id]
+  }
+
+  # Redis cache access
+  ingress {
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app_tier.id]
+  }
+
+  # No outbound internet access
+  tags = {
+    Name = "${var.project_name}-data-tier"
+    Tier = "database"
+  }
+}
+\end{minted}
+
+\subsection{Scalability \& Performance Architecture}
+
+\subsubsection{Auto-Scaling Strategy}
+
+\textbf{Horizontal Scaling Triggers:}
+\begin{itemize}
+  \item \textbf{CPU Utilization:} Scale out at 70\%, scale in at 30\%
+  \item \textbf{Memory Usage:} Scale out at 80\%, scale in at 40\%
+  \item \textbf{API Latency:} Scale out if p95 latency > 200ms
+  \item \textbf{Queue Depth:} Scale workers based on message backlog
+\end{itemize}
+
+\begin{minted}{yaml}
+# Kubernetes HPA configuration
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dfap-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dfap-api
+  minReplicas: 2
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Pods
+    pods:
+      metric:
+        name: api_latency_p95
+      target:
+        type: AverageValue
+        averageValue: "200m"
+behavior:
+  scaleUp:
+    stabilizationWindowSeconds: 60
+    policies:
+    - type: Percent
+      value: 100
+      periodSeconds: 15
+  scaleDown:
+    stabilizationWindowSeconds: 300
+    policies:
+    - type: Percent
+      value: 50
+      periodSeconds: 60
+\end{minted}
+
+\subsubsection{Database Scaling Strategy}
+
+\textbf{PostgreSQL Optimization:}
+\begin{itemize}
+  \item \textbf{Read Replicas:} For analytics and reporting queries
+  \item \textbf{Connection Pooling:} PgBouncer to manage connection limits
+  \item \textbf{Partitioning:} Time-based partitioning for large tables
+  \item \textbf{Materialized Views:} Pre-computed aggregations for dashboards
+\end{itemize}
+
+\begin{minted}{sql}
+-- Time-based partitioning for audit logs
+CREATE TABLE audit_logs (
+    id UUID DEFAULT uuid_generate_v4(),
+    table_name VARCHAR(255) NOT NULL,
+    operation VARCHAR(50) NOT NULL,
+    old_values JSONB,
+    new_values JSONB,
+    changed_by UUID,
+    changed_at TIMESTAMPTZ DEFAULT NOW()
+) PARTITION BY RANGE (changed_at);
+
+-- Monthly partitions for the current year
+CREATE TABLE audit_logs_2024_01 PARTITION OF audit_logs
+FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+
+CREATE TABLE audit_logs_2024_02 PARTITION OF audit_logs
+FOR VALUES FROM ('2024-02-01') TO ('2024-03-01');
+
+-- Automatic partition management
+CREATE OR REPLACE FUNCTION create_monthly_partition()
+RETURNS void AS $$
+DECLARE
+    start_date DATE;
+    end_date DATE;
+    partition_name TEXT;
+BEGIN
+    start_date := DATE_TRUNC('month', CURRENT_DATE + INTERVAL '1 month');
+    end_date := start_date + INTERVAL '1 month';
+    partition_name := 'audit_logs_' || TO_CHAR(start_date, 'YYYY_MM');
+    
+    EXECUTE format('CREATE TABLE %I PARTITION OF audit_logs 
+                    FOR VALUES FROM (%L) TO (%L)', 
+                   partition_name, start_date, end_date);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule monthly partition creation
+SELECT cron.schedule('create-partition', '0 0 1 * *', 'SELECT create_monthly_partition();');
+\end{minted}
+
+\subsection{CI/CD Pipeline Architecture}
+
+\subsubsection{GitOps Deployment Strategy}
+
+\begin{figure}[h]
+  \centering
+  \begin{minipage}{\linewidth}
+    \centering
+    \begin{verbatim}
+    ┌─────────────┐    ┌──────────────┐    ┌─────────────────┐
+    │   GitHub    │───▶│ GitHub       │───▶│ Deployment      │
+    │ Repository  │    │ Actions      │    │ Environment     │
+    └─────────────┘    └──────────────┘    └─────────────────┘
+           │                   │                      │
+           ▼                   ▼                      ▼
+    ┌─────────────┐    ┌──────────────┐    ┌─────────────────┐
+    │   Source    │    │ Build &      │    │ Kubernetes      │
+    │   Control   │    │ Test         │    │ Cluster         │
+    └─────────────┘    └──────────────┘    └─────────────────┘
+    \end{verbatim}
+    \caption{GitOps CI/CD pipeline architecture}
+  \end{minipage}
+\end{figure}
+
+\textbf{Pipeline Stages:}
+\begin{enumerate}
+  \item \textbf{Code Quality:} ESLint, Prettier, TypeScript compilation
+  \item \textbf{Testing:} Unit tests, integration tests, security scans
+  \item \textbf{Build:} Docker image build with multi-stage optimization
+  \item \textbf{Security:} Vulnerability scanning, dependency audit
+  \item \textbf{Deploy:} Infrastructure provisioning with Terraform
+  \item \textbf{Verification:} Health checks, smoke tests, rollback triggers
+\end{enumerate}
+
+\begin{minted}{yaml}
+# GitHub Actions workflow
+name: DFAP CI/CD Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm run test:coverage
+    
+    - name: Security audit
+      run: npm audit --audit-level moderate
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+    
+    - name: Login to ECR
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Build and push Docker image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: dfap-api
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+    
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./infra
+    
+    - name: Terraform Plan
+      run: terraform plan -var="image_tag=${{ github.sha }}"
+      working-directory: ./infra
+    
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
+      working-directory: ./infra
+\end{minted}
+
+\subsection{Monitoring \& Observability Stack}
+
+\subsubsection{Comprehensive Monitoring Strategy}
+
+\textbf{Monitoring Layers:}
+\begin{itemize}
+  \item \textbf{Infrastructure:} CPU, memory, disk, network metrics
+  \item \textbf{Application:} API latency, error rates, throughput
+  \item \textbf{Business:} Revenue metrics, SLA compliance, user satisfaction
+  \item \textbf{Security:} Failed logins, unusual API usage, vulnerability scans
+\end{itemize}
+
+\begin{minted}{yaml}
+# Prometheus configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  - job_name: 'dfap-api'
+    kubernetes_sd_configs:
+    - role: endpoints
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+      action: keep
+      regex: true
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+      action: replace
+      target_label: __metrics_path__
+      regex: (.+)
+
+  - job_name: 'postgresql'
+    static_configs:
+    - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+    - targets: ['redis-exporter:9121']
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093
+\end{minted}
+
+\subsubsection{SLA Monitoring and Alerting}
+
+\begin{minted}{yaml}
+# Alert rules for SLA monitoring
+groups:
+- name: dfap-sla-alerts
+  rules:
+  - alert: HighAPILatency
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.2
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High API latency detected"
+      description: "95th percentile latency is {{ $value }}s"
+
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.01
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value | humanizePercentage }}"
+
+  - alert: DatabaseConnectionFailure
+    expr: up{job="postgresql"} == 0
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Database connection failure"
+      description: "PostgreSQL database is not responding"
+
+  - alert: ZohoWebhookProcessingDelay
+    expr: increase(webhook_processing_duration_seconds_sum[5m]) / increase(webhook_processing_duration_seconds_count[5m]) > 30
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Zoho webhook processing delay"
+      description: "Average webhook processing time is {{ $value }}s"
+\end{minted}
+
+\subsection{Security \& Compliance Framework}
+
+\subsubsection{Security Controls Implementation}
+
+\textbf{Defense in Depth Strategy:}
+\begin{itemize}
+  \item \textbf{Network Security:} WAF, DDoS protection, private subnets
+  \item \textbf{Application Security:} JWT authentication, rate limiting, input validation
+  \item \textbf{Data Security:} Encryption at rest and in transit, field-level encryption
+  \item \textbf{Access Control:} IAM roles, least privilege, MFA requirements
+  \item \textbf{Monitoring:} Security event logging, anomaly detection
+\end{itemize}
+
+\begin{minted}{terraform}
+# WAF configuration for API protection
+resource "aws_wafv2_web_acl" "dfap_api_protection" {
+  name  = "${var.project_name}-api-waf"
+  scope = "REGIONAL"
+
+  default_action {
+    allow {}
+  }
+
+  # Rate limiting rule
+  rule {
+    name     = "RateLimitRule"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 2000
+        aggregate_key_type = "IP"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "RateLimitRule"
+      sampled_requests_enabled   = true
+    }
+
+    action {
+      block {}
+    }
+  }
+
+  # SQL injection protection
+  rule {
+    name     = "AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 2
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "KnownBadInputsRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  tags = {
+    Name = "${var.project_name}-api-waf"
+  }
+}
+\end{minted}
+
+\subsection{Disaster Recovery \& Business Continuity}
+
+\subsubsection{Backup and Recovery Strategy}
+
+\textbf{Recovery Time Objectives (RTO):}
+\begin{itemize}
+  \item \textbf{Critical Services:} < 15 minutes (API, authentication)
+  \item \textbf{Database Services:} < 30 minutes (PostgreSQL, Neo4j)
+  \item \textbf{Analytics Services:} < 2 hours (reporting, dashboards)
+  \item \textbf{Full System Recovery:} < 4 hours (complete infrastructure)
+\end{itemize}
+
+\textbf{Recovery Point Objectives (RPO):}
+\begin{itemize}
+  \item \textbf{Financial Data:} < 5 minutes (continuous replication)
+  \item \textbf{Customer Data:} < 15 minutes (frequent snapshots)
+  \item \textbf{Analytics Data:} < 1 hour (batch processing acceptable)
+\end{itemize}
+
+\begin{minted}{terraform}
+# Automated backup configuration
+resource "aws_db_instance" "postgresql" {
+  identifier = "${var.project_name}-postgres"
+  
+  # Backup configuration
+  backup_retention_period = 30
+  backup_window          = "03:00-04:00"
+  maintenance_window     = "sun:04:00-sun:05:00"
+  delete_automated_backups = false
+  
+  # High availability
+  multi_az = true
+  
+  # Encryption
+  storage_encrypted = true
+  kms_key_id       = aws_kms_key.database.arn
+  
+  # Monitoring
+  performance_insights_enabled = true
+  monitoring_interval         = 60
+  monitoring_role_arn        = aws_iam_role.rds_monitoring.arn
+  
+  tags = {
+    Name = "${var.project_name}-postgres"
+    Backup = "automated"
+  }
+}
+
+# Cross-region backup replication
+resource "aws_db_instance" "postgresql_replica" {
+  provider = aws.backup_region
+  
+  identifier = "${var.project_name}-postgres-replica"
+  
+  # Source database
+  replicate_source_db = aws_db_instance.postgresql.identifier
+  
+  # Instance configuration
+  instance_class = var.replica_instance_class
+  
+  tags = {
+    Name = "${var.project_name}-postgres-replica"
+    Purpose = "disaster_recovery"
+  }
+}
+\end{minted}
+
+\subsection{Cost Optimization Strategy}
+
+\subsubsection{Resource Optimization}
+
+\textbf{Cost Control Measures:}
+\begin{itemize}
+  \item \textbf{Auto-Scaling:} Scale down during low usage periods
+  \item \textbf{Spot Instances:} Use for non-critical batch processing
+  \item \textbf{Reserved Instances:} Long-term commitments for predictable workloads
+  \item \textbf{Storage Tiering:} Move infrequent data to cheaper storage classes
+  \item \textbf{Data Lifecycle:} Automated archival and deletion policies
+\end{itemize}
+
+\begin{minted}{yaml}
+# Cost optimization through scheduled scaling
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dfap-worker-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dfap-worker
+  minReplicas: 1  # Minimum during off-hours
+  maxReplicas: 20 # Maximum during peak hours
+
+---
+# Scheduled scaling for predictable patterns
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scale-up-peak-hours
+spec:
+  schedule: "0 8 * * 1-5"  # 8 AM weekdays
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: kubectl
+            image: bitnami/kubectl
+            command:
+            - kubectl
+            - patch
+            - hpa
+            - dfap-worker-hpa
+            - -p
+            - '{"spec":{"minReplicas":5}}'
+          restartPolicy: OnFailure
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scale-down-off-hours
+spec:
+  schedule: "0 18 * * 1-5"  # 6 PM weekdays
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: kubectl
+            image: bitnami/kubectl
+            command:
+            - kubectl
+            - patch
+            - hpa
+            - dfap-worker-hpa
+            - -p
+            - '{"spec":{"minReplicas":1}}'
+          restartPolicy: OnFailure
+\end{minted} 
