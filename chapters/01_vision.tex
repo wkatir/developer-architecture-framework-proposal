@@ -1,0 +1,25 @@
+\section{Vision \& High-Level Architecture}
+
+\subsection{Business Context \& Goals}
+GCBI needs to scale from 1K → 100K+ monthly service interactions with:
+\begin{itemize}
+  \item End-to-end traceability: Clients → Projects → Invoices
+  \item Automated notifications (pricing, shipping, time-tracking)
+  \item Unified dashboard of support, billing, and project status
+\end{itemize}
+
+\subsection{Proposed Solution}
+A lightweight \emph{Integration API} that:
+\begin{enumerate}
+  \item Ingests Zoho webhooks via OAuth2
+  \item Publishes events to RabbitMQ
+  \item Persists core data in PostgreSQL \& Neo4j
+  \item Exposes a unified GraphQL/REST façade
+\end{enumerate}
+
+\subsection{High-Level Architecture}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{diagrams/high_level_architecture.svg}
+  \caption{Integration tier between Zoho One modules and internal data stores}
+\end{figure} 

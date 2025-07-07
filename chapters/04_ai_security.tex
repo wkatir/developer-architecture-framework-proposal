@@ -1,0 +1,15 @@
+\section{AI \& Security Considerations}
+
+\subsection{AI Integration}
+\begin{enumerate}
+  \item \textbf{Price Anomaly Detection:} IsolationForest on invoice changes.
+  \item \textbf{Ticket Response Suggestion:} Fine-tune GPT-3.5 Turbo on resolved tickets.
+\end{enumerate}
+
+\subsection{Security \& Compliance}
+\begin{itemize}
+  \item \textbf{AuthN/AuthZ:} OAuth2 for Zoho; JWT + RBAC internally.
+  \item \textbf{Encryption:} TLS1.2+ in transit; AES-256 at rest.
+  \item \textbf{Audit Logs:} Append-only logs of all webhook/events.
+  \item \textbf{Standards:} ISO-9001 traceability; SOC-2 least-privilege.
+\end{itemize} 

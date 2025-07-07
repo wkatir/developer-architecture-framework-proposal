@@ -1,0 +1,33 @@
+\section{Data Model \& Integration Strategy}
+
+\subsection{Relational Model (PostgreSQL)}
+\begin{verbatim}
+CREATE TABLE clients (
+  id SERIAL PRIMARY KEY,
+  zoho_id TEXT UNIQUE NOT NULL,
+  name TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- projects, invoices likewise...
+\end{verbatim}
+
+\subsection{ER Diagram}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{diagrams/data_model_er.svg}
+  \caption{Entity-Relationship Diagram (PostgreSQL)}
+\end{figure}
+
+\subsection{Graph Model (Neo4j)}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{diagrams/graph_model.svg}
+  \caption{Graph sketch for lineage and complex relationships}
+\end{figure}
+
+\subsection{Integration Patterns}
+\begin{itemize}
+  \item \textbf{Real-time Webhooks}: Zoho → \texttt{/zoho/webhook} → RabbitMQ
+  \item \textbf{Nightly ETL}: Full table snapshots for analytics
+  \item \textbf{GraphQL Federation}: Stitch Zoho REST + local data under one schema
+\end{itemize} 

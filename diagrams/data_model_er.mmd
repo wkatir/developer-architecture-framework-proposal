@@ -1,0 +1,23 @@
+erDiagram
+    CLIENTS {
+      SERIAL id PK
+      TEXT zoho_id UNIQUE
+      TEXT name
+      TIMESTAMPTZ created_at
+    }
+    PROJECTS {
+      SERIAL id PK
+      TEXT zoho_id UNIQUE
+      TEXT name
+      TEXT status
+      TIMESTAMPTZ created_at
+    }
+    INVOICES {
+      SERIAL id PK
+      TEXT zoho_id UNIQUE
+      NUMERIC amount
+      TIMESTAMPTZ issued_at
+      TIMESTAMPTZ created_at
+    }
+    CLIENTS ||--o{ PROJECTS : owns
+    PROJECTS ||--o{ INVOICES : billed_by 

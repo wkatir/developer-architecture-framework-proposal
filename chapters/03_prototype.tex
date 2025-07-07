@@ -1,0 +1,46 @@
+\section{Prototype Skeleton}
+
+\subsection{Tech Stack}
+\begin{itemize}
+  \item \textbf{Backend:} Node.js + Express
+  \item \textbf{Message Bus:} RabbitMQ
+  \item \textbf{Relational DB:} PostgreSQL
+  \item \textbf{Graph DB:} Neo4j
+\end{itemize}
+
+\subsection{Directory Layout}
+\begin{verbatim}
+prototype/
+├── src/
+│   └── index.js
+├── db/schema.sql
+├── graph/schema.cypher
+├── .env.example
+├── package.json
+├── Dockerfile
+└── docker-compose.yml
+\end{verbatim}
+
+\subsection{Key Code Snippets}
+\paragraph{Webhook Receiver}
+\begin{minted}{js}
+// src/index.js
+app.post('/zoho/webhook', async (req,res)=> {
+  await channel.sendToQueue(
+    'zoho_events',
+    Buffer.from(JSON.stringify(req.body))
+  );
+  res.sendStatus(200);
+});
+\end{minted}
+
+\paragraph{Sample Data Fetch}
+\begin{minted}{js}
+app.get('/projects/:id', async (req,res) => {
+  // TODO: fetch & merge from Postgres + Neo4j
+  res.json({projectId:req.params.id, message:'stub'});
+});
+\end{minted}
+
+\subsection{Run Instructions}
+See \texttt{prototype/README.md} for Docker-based setup and local dev. 

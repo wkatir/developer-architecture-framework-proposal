@@ -1,0 +1,11 @@
+flowchart LR
+  Client((Client))
+  Project((Project))
+  Invoice((Invoice))
+  Equipment((Equipment))
+  Location((Location))
+
+  Client -->|OWNS, since| Project
+  Project -->|BILLED_BY, amount,date| Invoice
+  Invoice -->|USES, quantity| Equipment
+  Equipment -->|LOCATED_AT| Location 

@@ -1,0 +1,46 @@
+\documentclass[11pt,a4paper]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+  \geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{pdfpages}       % for embedding PDFs
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{minted}         % for code snippets
+\title{Developer Architecture Framework Proposal}
+\author{Wilmer Salazar}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\clearpage
+
+% Core deliverables
+\input{chapters/01_vision.tex}
+\input{chapters/02_data_model.tex}
+\input{chapters/03_prototype.tex}
+\input{chapters/04_ai_security.tex}
+\input{chapters/05_video_script.tex}
+
+\clearpage
+\appendix
+
+\section{Zoho Apps Hierarchy}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{assets/zoho_apps_hierarchy.png}
+  \caption{Full Zoho-One module/child relationships}
+\end{figure}
+
+\section{Blueprints: Zoho Projects}
+\includepdf[pages=-,pagecommand={},width=\textwidth]{assets/process-automation-blueprints.pdf}
+
+\section{DAFP Attachment 1: SOW}
+\includepdf[pages=-,pagecommand={},width=\textwidth]{assets/DAFP_Attachment1_SOW.pdf}
+
+\section{DAFP Main Spec}
+\includepdf[pages=-,pagecommand={},width=\textwidth]{assets/DAFP_Main.pdf}
+
+\end{document} 

@@ -1,0 +1,11 @@
+flowchart LR
+  subgraph Zoho-One
+    CRM[Zoho CRM] --> API[Integration API]
+    Desk[Zoho Desk] --> API
+    Proj[Zoho Projects] --> API
+    Books[Zoho Books] --> API
+  end
+  API -->|writes to| PG[(PostgreSQL)]
+  API -->|writes to| NG[(Neo4j)]
+  PG -- Reads/Writes --> Facade[GraphQL/REST Façade]
+  NG -- Reads/Writes --> Facade 

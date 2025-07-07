@@ -1,0 +1,14 @@
+{
+  "name": "zoho-dafp-prototype",
+  "version": "1.0.0",
+  "description": "DFAP integration layer prototype",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "amqplib": "^0.8.0",
+    "dotenv": "^16.0.0"
+  }
+} 

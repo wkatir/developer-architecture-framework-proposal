@@ -1,0 +1,15 @@
+# Node
+prototype/node_modules/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+
+# Diagrams
+diagrams/*.svg
+
+# Build artifacts
+main.pdf 
